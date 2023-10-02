@@ -343,21 +343,41 @@ static void MX_GPIO_Init(void)
 void EXTI0_1_IRQHandler(void)
 {
 	// TODO: Add code to switch LED7 delay frequency
-	
-  
-	HAL_GPIO_EXTI_IRQHandler(Button0_Pin); // Clear interrupt flags
+  if(__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_0) != RESET){
+    //Clear the interrupt flag
+    __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
+
+    //Toggle the delay frequency between 1hz and 2hz
+    if(delay_t == 500)
+    {
+      delay_t = 1000;
+    }
+    else{
+      delay_t = 500;
+    }
 }
 
 // TODO: Complete the writeLCD function
 void writeLCD(char *char_in){
-    delay(3000);
-	lcd_command(CLEAR);
+   delay(3000);
+   lcd_command(CLEAR);
 
+   lcd_putstring(char_in);
 }
 
 // Get ADC value
 uint32_t pollADC(void){
-  // TODO: Complete function body to get ADC val
+   // TODO: Complete function body to get ADC val
+  HAL_ADC_Start(&hadc);
+
+  //Wait for conversion to complete
+  HAL_ADC_PollForConversion(&hadc, HAL_MAX_DELAY);
+
+  //Read ADC value
+  uint32_t val = HAL_ADC_GetValue(&hadc);
+
+  //Stop ADC conversion
+  HAL_ADC_Stop(&hadc);
 
 	return val;
 }
@@ -365,8 +385,9 @@ uint32_t pollADC(void){
 // Calculate PWM CCR value
 uint32_t ADCtoCCR(uint32_t adc_val){
   // TODO: Calculate CCR val using an appropriate equation
+  uint32_t val = (adc_val * 47999)/ 4095;
 
-	return val;
+  return val;
 }
 
 void ADC1_COMP_IRQHandler(void)
